@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition</title>
+</head>
+<body>
+    <h1>Face Recognition</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" id="file-input" name="file" accept="image/*">
+        <button type="submit">Upload</button>
+    </form>
+    <div id="result"></div>
+    <img id="uploaded-image" src="" alt="Uploaded Image" style="display:none; max-width:100%; height:auto;">
+
+    <script>
+        document.getElementById('upload-form').onsubmit = async function(event) {
+            event.preventDefault();
+
+            const fileInput = document.getElementById('file-input');
+            if (fileInput.files.length === 0) {
+                alert('Please select a file!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+            const resultDiv = document.getElementById('result');
+            const uploadedImage = document.getElementById('uploaded-image');
+
+            if (result.error) {
+                resultDiv.innerText = result.error;
+            } else {
+                resultDiv.innerText = result.name ? `Hello, ${result.name}!` : 'Face not recognized.';
+                uploadedImage.src = `/uploads/${result.filename}`;
+                uploadedImage.style.display = 'block';
+            }
+        };
+    </script>
+</body>
+</html>
