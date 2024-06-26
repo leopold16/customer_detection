@@ -15,14 +15,8 @@
         .container {
             max-width: 600px;
         }
-        .video-container, .upload-container {
+        .video-container {
             margin-bottom: 20px;
-        }
-        #uploaded-image {
-            display: none;
-            max-width: 100%;
-            height: auto;
-            margin-top: 20px;
         }
         #result {
             font-size: 1.2rem;
@@ -37,26 +31,9 @@
         <!-- Webcam video stream -->
         <div class="video-container text-center">
             <video id="webcam" class="border" autoplay playsinline width="320" height="240"></video>
-            <div class="mt-2">
-                <button id="capture-button" class="btn btn-primary">Capture Photo</button>
-            </div>
-        </div>
-
-        <hr>
-
-        <!-- Image upload form -->
-        <div class="upload-container">
-            <form id="upload-form" enctype="multipart/form-data" class="text-center">
-                <div class="form-group">
-                    <input type="file" id="file-input" name="file" class="form-control-file" accept="image/*">
-                </div>
-                <button type="submit" class="btn btn-success">Upload</button>
-            </form>
         </div>
 
         <div id="result" class="text-center text-success"></div>
-        <img id="uploaded-image" src="" alt="Uploaded Image" class="img-fluid mx-auto d-block">
-
     </div>
 
     <!-- Bootstrap JS and dependencies -->
@@ -67,84 +44,51 @@
     <script>
         // Get access to the webcam
         const video = document.getElementById('webcam');
-        const captureButton = document.getElementById('capture-button');
-        const uploadForm = document.getElementById('upload-form');
         const resultDiv = document.getElementById('result');
-        const uploadedImage = document.getElementById('uploaded-image');
 
         // Start video stream
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
+                startProcessing();
             })
             .catch(error => {
                 console.error('Error accessing webcam:', error);
             });
 
-        // Capture photo from webcam
-        captureButton.addEventListener('click', () => {
+        // Capture and process frames
+        function startProcessing() {
             const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const context = canvas.getContext('2d');
+            
+            setInterval(async () => {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append('file', blob, 'webcam.jpg');
 
-            canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append('file', blob, 'webcam.jpg');
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                const response = await fetch('/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+                    const result = await response.json();
 
-                const result = await response.json();
-
-                if (result.error) {
-                    resultDiv.innerText = result.error;
-                    resultDiv.classList.remove('text-success');
-                    resultDiv.classList.add('text-danger');
-                } else {
-                    resultDiv.innerText = result.name ? `Hello, ${result.name}! Emotion: ${result.emotion}` : 'Face not recognized.';
-                    resultDiv.classList.remove('text-danger');
-                    resultDiv.classList.add('text-success');
-                    uploadedImage.src = `/uploads/${result.filename}`;
-                    uploadedImage.style.display = 'block';
-                }
-            }, 'image/jpeg');
-        });
-
-        // Handle file upload
-        uploadForm.onsubmit = async function(event) {
-            event.preventDefault();
-
-            const fileInput = document.getElementById('file-input');
-            if (fileInput.files.length === 0) {
-                alert('Please select a file!');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (result.error) {
-                resultDiv.innerText = result.error;
-                resultDiv.classList.remove('text-success');
-                resultDiv.classList.add('text-danger');
-            } else {
-                resultDiv.innerText = result.name ? `Hello, ${result.name}! Emotion: ${result.emotion}` : 'Face not recognized.';
-                resultDiv.classList.remove('text-danger');
-                resultDiv.classList.add('text-success');
-                uploadedImage.src = `/uploads/${result.filename}`;
-                uploadedImage.style.display = 'block';
-            }
-        };
+                    if (result.error) {
+                        resultDiv.innerText = result.error;
+                        resultDiv.classList.remove('text-success');
+                        resultDiv.classList.add('text-danger');
+                    } else {
+                        resultDiv.innerText = result.name ? `Hello, ${result.name}! Emotion: ${result.emotion}` : 'Face not recognized.';
+                        resultDiv.classList.remove('text-danger');
+                        resultDiv.classList.add('text-success');
+                    }
+                }, 'image/jpeg');
+            }, 2000); // Process every 2 seconds
+        }
     </script>
 </body>
 </html>
