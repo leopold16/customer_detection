@@ -104,7 +104,7 @@
                     resultDiv.classList.remove('text-success');
                     resultDiv.classList.add('text-danger');
                 } else {
-                    resultDiv.innerText = result.name ? `Hello, ${result.name}!` : 'Face not recognized.';
+                    resultDiv.innerText = result.name ? `Hello, ${result.name}! Emotion: ${result.emotion}` : 'Face not recognized.';
                     resultDiv.classList.remove('text-danger');
                     resultDiv.classList.add('text-success');
                     uploadedImage.src = `/uploads/${result.filename}`;
@@ -138,7 +138,7 @@
                 resultDiv.classList.remove('text-success');
                 resultDiv.classList.add('text-danger');
             } else {
-                resultDiv.innerText = result.name ? `Hello, ${result.name}!` : 'Face not recognized.';
+                resultDiv.innerText = result.name ? `Hello, ${result.name}! Emotion: ${result.emotion}` : 'Face not recognized.';
                 resultDiv.classList.remove('text-danger');
                 resultDiv.classList.add('text-success');
                 uploadedImage.src = `/uploads/${result.filename}`;

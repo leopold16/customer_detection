@@ -34,9 +34,9 @@ def upload_file():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
-        name = detect_face(filepath)  # Call the updated face detection function
+        name, emotion = detect_face(filepath)  # Call the updated face detection function
 
-        return jsonify({'name': name, 'filename': filename})
+        return jsonify({'name': name, 'emotion': emotion, 'filename': filename})
 
     return jsonify({'error': 'File not allowed'})
 
